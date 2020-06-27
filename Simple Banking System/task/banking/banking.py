@@ -1,5 +1,7 @@
 import random
 import sys
+import sqlite3
+from sqlite3 import Error
 
 
 class SimpleBankingSystem:
@@ -11,6 +13,34 @@ class SimpleBankingSystem:
         self.balance = 0
         self.card_pool = {}
         self.acc_pool = set()
+        self.conn = None
+
+    def create_connection(self, db_file):
+        conn = None
+        try:
+            conn = sqlite3.connect(db_file)
+            return conn
+        except Error as e:
+            print(e)
+        return conn
+
+    def create_table(self, conn, create_table_sql):
+        try:
+            c = conn.cursor()
+            c.execute(create_table_sql)
+        except Error as e:
+            print(e)
+
+    def database_file_name(self):
+        return 'card.s3db'
+
+    def sql_create_card_table(self):
+        return """CREATE TABLE IF NOT EXISTS card(
+                    id INTEGER PRIMARY KEY,
+                    number TEXT,
+                    pin TEXT,
+                    balance INTEGER DEFAULT 0 
+                  );"""
 
     def display_option(self, options):
         for option in options:
@@ -41,9 +71,21 @@ class SimpleBankingSystem:
             self.card_pool[card_number] = str(random.randint(0, 9999)).zfill(4)
             return card_number
 
+    def insert_new_card_details(self, conn, card):
+        sql = ''' INSERT INTO card(number, pin)
+                  VALUES(?,?);'''
+        c = conn.cursor()
+        c.execute(sql, card)
+
     def create_an_account(self):
         print('\nYour card has been created')
         new_card_number = self.create_new_card_number()
+
+        with self.conn:
+            card = (new_card_number, self.card_pool.get(new_card_number))
+            self.insert_new_card_details(self.conn, card)
+
+        # to display
         print('Your card number:\n{}'.format(new_card_number))
         print('Your card PIN:\n{}'.format(self.card_pool.get(new_card_number)))
 
@@ -77,6 +119,10 @@ class SimpleBankingSystem:
             self.perform_transactions()
 
     def main_menu(self):
+        # creating a database
+        self.conn = self.create_connection(self.database_file_name())
+        self.create_table(self.conn, self.sql_create_card_table())
+
         choice = -1
         while choice != '0':
             print()
