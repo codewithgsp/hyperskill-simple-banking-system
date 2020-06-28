@@ -63,7 +63,7 @@ class SimpleBankingSystem:
                       FROM card
                       WHERE number = '{acc}' '''.format(acc=acc))
         card_detail = c.fetchone()
-        print(card_detail[0])
+
         if not card_detail:
             return None
         return card_detail[0]
@@ -74,7 +74,7 @@ class SimpleBankingSystem:
                       FROM card
                       WHERE number = '{number}' '''.format(number=number))
         pin_detail = c.fetchone()
-        print(pin_detail[0])
+
         if not pin_detail:
             return None
         return pin_detail[0]
@@ -120,7 +120,7 @@ class SimpleBankingSystem:
             print('Such a card does not exist.')
             return False
 
-        if card_number == transfer_acc_no:
+        if card_number == self.user_input_acc:
             print("You can't transfer money to the same account!")
             return False
 
